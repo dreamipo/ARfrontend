@@ -50,19 +50,28 @@ export default function WelcomeScreen({ navigation }) {
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
       <style>
-        body { 
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        html, body { 
           margin: 0; 
-          background: #000000 !important;
+          padding: 0;
+          background: transparent !important;
           overflow: hidden;
           display: flex;
           align-items: center;
           justify-content: center;
           height: 100vh;
+          width: 100vw;
         }
         model-viewer { 
           width: 100%; 
           height: 100%;
-          background-color: #000000 !important;
+          background-color: transparent !important;
+          --poster-color: transparent;
+          --progress-bar-color: transparent;
         }
         model-viewer::part(default-ar-button) {
           display: none;
@@ -77,12 +86,19 @@ export default function WelcomeScreen({ navigation }) {
         auto-rotate
         auto-rotate-delay="0"
         rotation-per-second="25deg"
-        camera-controls
+        disable-zoom
         shadow-intensity="1.5"
         exposure="1.3"
         interaction-prompt="none"
         loading="eager"
+        environment-image="neutral"
       ></model-viewer>
+      <script>
+        const viewer = document.querySelector('model-viewer');
+        viewer.addEventListener('mousedown', (e) => e.preventDefault());
+        viewer.addEventListener('touchstart', (e) => e.preventDefault());
+        viewer.addEventListener('pointerdown', (e) => e.preventDefault());
+      </script>
     </body>
   </html>
   `;
@@ -149,6 +165,8 @@ export default function WelcomeScreen({ navigation }) {
                 domStorageEnabled={true}
                 allowsInlineMediaPlayback={true}
                 mediaPlaybackRequiresUserAction={false}
+                scrollEnabled={false}
+                opacity={0.99}
                 onLoadEnd={() => {
                   Animated.timing(modelOpacity, {
                     toValue: 1,
@@ -269,6 +287,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
     paddingBottom: 50,
+    backgroundColor: "transparent",
   },
   bottomSection: {
     alignItems: "center",

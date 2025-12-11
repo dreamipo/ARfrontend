@@ -5,12 +5,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Share,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { captureRef } from "react-native-view-shot";
 import * as MediaLibrary from "expo-media-library";
+import * as Sharing from "expo-sharing";
 
 const QRScreen = ({ route, navigation }) => {
   const { usdzUrl } = route.params;
@@ -36,6 +38,29 @@ const QRScreen = ({ route, navigation }) => {
     } catch (err) {
       console.log(err);
       Alert.alert("Error", "Failed to save QR code.");
+    }
+  };
+
+  const shareQR = async () => {
+    try {
+      const uri = await captureRef(qrRef, {
+        format: "png",
+        quality: 1,
+      });
+
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert("Error", "Sharing is not available on this device.");
+        return;
+      }
+
+      await Sharing.shareAsync(uri, {
+        mimeType: "image/png",
+        dialogTitle: "Share QR Code",
+      });
+    } catch (err) {
+      console.log(err);
+      Alert.alert("Error", "Failed to share QR code.");
     }
   };
 
@@ -66,10 +91,17 @@ const QRScreen = ({ route, navigation }) => {
         Scan this QR with another iPhone to open the 3D model in AR.
       </Text>
 
-      <TouchableOpacity style={styles.downloadButton} onPress={downloadQR}>
-        <MaterialCommunityIcons name="download" size={22} color="white" />
-        <Text style={styles.downloadText}>Download QR</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.shareButton} onPress={shareQR}>
+          <MaterialCommunityIcons name="share-variant" size={22} color="white" />
+          <Text style={styles.buttonText}>Share QR</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.downloadButton} onPress={downloadQR}>
+          <MaterialCommunityIcons name="download" size={22} color="white" />
+          <Text style={styles.buttonText}>Download QR</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -129,18 +161,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
 
+  buttonContainer: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 95,
+  },
+
+  shareButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2196F3",
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
+  },
+
   downloadButton: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#27AE60",
-    paddingHorizontal: 40,
+    paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 12,
-    marginTop: 95,
     gap: 8,
   },
 
-  downloadText: {
+  buttonText: {
     color: "white",
     fontSize: 16,
     fontWeight: "600",

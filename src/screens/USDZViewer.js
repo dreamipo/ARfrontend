@@ -23,6 +23,7 @@ export default function USDZViewer({ route, navigation }) {
   const [showNameModal, setShowNameModal] = useState(false);
   const [modelName, setModelName] = useState("");
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
 
   if (!usdzUrl) {
     return (
@@ -54,7 +55,7 @@ export default function USDZViewer({ route, navigation }) {
       } catch (error) {
         console.log(`Attempt ${i + 1} failed, retrying...`);
       }
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s between attempts
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
     return false;
   };
@@ -64,7 +65,6 @@ export default function USDZViewer({ route, navigation }) {
     setDownloadProgress(0);
 
     try {
-      // Simulate download progress
       const progressInterval = setInterval(() => {
         setDownloadProgress(prev => {
           if (prev >= 90) {
@@ -75,7 +75,6 @@ export default function USDZViewer({ route, navigation }) {
         });
       }, 1000);
 
-      // Check if file is available
       const isAvailable = await checkFileAvailability(usdzUrl);
       
       clearInterval(progressInterval);
@@ -91,10 +90,8 @@ export default function USDZViewer({ route, navigation }) {
         return;
       }
 
-      // Add a small delay to show 100% completion
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Open AR viewer
       const canOpen = await Linking.canOpenURL(usdzUrl);
       if (canOpen) {
         await Linking.openURL(usdzUrl);
@@ -116,28 +113,105 @@ export default function USDZViewer({ route, navigation }) {
     }
   };
 
+  // Background upload function
+  const uploadFilesInBackground = async (userId, modelName, timestamp, usdzUrl) => {
+    const bucketName = 'user-models';
+    const usdzPath = `${userId}/usdz/${modelName.trim()}_${timestamp}.usdz`;
+
+    try {
+      console.log("Background USDZ upload starting...");
+
+      // Upload USDZ
+      const usdzResp = await fetch(usdzUrl);
+      const usdzArrayBuffer = await usdzResp.arrayBuffer();
+      const usdzUint8 = new Uint8Array(usdzArrayBuffer);
+      
+      await supabase.storage
+        .from(bucketName)
+        .upload(usdzPath, usdzUint8, { upsert: true });
+      
+      console.log("✓ USDZ uploaded successfully in background");
+      
+    } catch (err) {
+      console.error("Background upload error:", err);
+      // Silently fail - metadata is already saved
+    }
+  };
+
   const saveToHistory = async () => {
     if (!modelName.trim()) {
-      Alert.alert("Name Required", "Please enter a valid model name.");
+      Alert.alert("Enter a name", "Please enter a valid name for your model.");
       return;
     }
 
-    const { error } = await supabase.from("history").insert([
-      {
-        name: modelName.trim(),
-        glb_url: null,
-        usdz_url: usdzUrl,
-      },
-    ]);
+    setIsSaving(true);
 
-    if (error) {
-      Alert.alert("Error", "Failed to save model to history.");
-      return;
+    try {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        Alert.alert("Error", "You must be logged in to save models.");
+        setIsSaving(false);
+        return;
+      }
+
+      const userId = user.id;
+      const timestamp = Date.now();
+      const bucketName = 'user-models';
+      
+      // File path
+      const usdzPath = `${userId}/usdz/${modelName.trim()}_${timestamp}.usdz`;
+
+      // Save metadata to database FIRST (instant)
+      console.log("Saving metadata to database...");
+      const { error: dbError } = await supabase
+        .from('user_models')
+        .insert({
+          user_id: userId,
+          name: modelName.trim(),
+          glb_path: null,
+          usdz_path: usdzPath,
+          thumbnail_path: null,
+        });
+
+      if (dbError) {
+        console.error("Database error:", dbError);
+        throw dbError;
+      }
+      
+      console.log("✓ Metadata saved instantly");
+
+      // Close modal and show success immediately
+      setShowNameModal(false);
+      setModelName("");
+      setIsSaving(false);
+      
+      Alert.alert(
+        "Success! 🎉", 
+        "AR Model saved to your collection!\n\nFile is uploading in the background.",
+        [
+          { 
+            text: "View History", 
+            onPress: () => navigation.navigate("MainTabs", {
+              screen: "HistoryTab",
+            })
+          },
+          { text: "OK" }
+        ]
+      );
+
+      // Upload file in background (non-blocking)
+      uploadFilesInBackground(userId, modelName, timestamp, usdzUrl);
+      
+    } catch (err) {
+      console.error("Save error:", err);
+      setIsSaving(false);
+      Alert.alert(
+        "Error", 
+        `Failed to save model.\n\nDetails: ${err.message}`
+      );
     }
-
-    setShowNameModal(false);
-    setModelName("");
-    Alert.alert("Success", "Model saved to your collection!");
   };
 
   return (
@@ -240,6 +314,7 @@ export default function USDZViewer({ route, navigation }) {
               style={styles.secondaryButton}
               onPress={() => setShowNameModal(true)}
               activeOpacity={0.8}
+              disabled={isSaving}
             >
               <LinearGradient
                 colors={['rgba(155, 92, 255, 0.2)', 'rgba(106, 37, 244, 0.2)']}
@@ -375,6 +450,7 @@ export default function USDZViewer({ route, navigation }) {
                   setModelName("");
                 }}
                 activeOpacity={0.7}
+                disabled={isSaving}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -383,15 +459,25 @@ export default function USDZViewer({ route, navigation }) {
                 style={styles.modalButton}
                 onPress={saveToHistory}
                 activeOpacity={0.8}
+                disabled={isSaving}
               >
                 <LinearGradient
-                  colors={['#9b5cff', '#6a25f4']}
+                  colors={isSaving ? ['#666', '#444'] : ['#9b5cff', '#6a25f4']}
                   style={styles.saveButtonGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <MaterialCommunityIcons name="check" size={20} color="white" />
-                  <Text style={styles.saveButtonText}>Save Model</Text>
+                  {isSaving ? (
+                    <>
+                      <ActivityIndicator size="small" color="white" />
+                      <Text style={styles.saveButtonText}>Saving...</Text>
+                    </>
+                  ) : (
+                    <>
+                      <MaterialCommunityIcons name="check" size={20} color="white" />
+                      <Text style={styles.saveButtonText}>Save Model</Text>
+                    </>
+                  )}
                 </LinearGradient>
               </TouchableOpacity>
             </View>

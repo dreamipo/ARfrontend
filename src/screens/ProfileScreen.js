@@ -274,7 +274,7 @@ const saveImageLocally = async (imageUri) => {
                 <Text style={styles.userEmail}>{dbUser.email}</Text>
 
                 {/* Stats */}
-                <View style={styles.statsContainer}>
+                {/* <View style={styles.statsContainer}>
                   <View style={styles.statBox}>
                     <MaterialCommunityIcons
                       name="cube-outline"
@@ -284,7 +284,7 @@ const saveImageLocally = async (imageUri) => {
                     <Text style={styles.statNumber}>12</Text>
                     <Text style={styles.statLabel}>Models</Text>
                   </View>
-                </View>
+                </View> */}
               </View>
             </LinearGradient>
           </View>
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
     
   },
   header: {
-    marginBottom: 10,
+    marginBottom: 20,
 
   
   },

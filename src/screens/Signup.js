@@ -138,7 +138,7 @@ const SignupScreen = () => {
       Alert.alert(
         "Success!",
         "Account created! Check your email to confirm your account.",
-        [{ text: "OK", onPress: () => navigation.replace("Login") }]
+        [{ text: "OK", onPress: () => navigation.replace("LoginScreen") }]
       );
     } catch (err) {
       console.error("Signup error:", err);

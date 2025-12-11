@@ -278,9 +278,10 @@ export default function HistoryScreen({ navigation }) {
       // Generate public URLs for each model
       const bucketName = 'user-models';
       const itemsList = models.map((model) => {
-        const glbUrl = supabase.storage
-          .from(bucketName)
-          .getPublicUrl(model.glb_path).data.publicUrl;
+        const glbUrl = model.glb_path
+  ? supabase.storage.from(bucketName).getPublicUrl(model.glb_path).data.publicUrl
+  : null;
+
 
         const usdzUrl = model.usdz_path
           ? supabase.storage.from(bucketName).getPublicUrl(model.usdz_path).data.publicUrl
