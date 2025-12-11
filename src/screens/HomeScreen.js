@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
   },
   title: { 
     color: 'white', 
-    fontSize: 28, 
+    fontSize: 27, 
     fontFamily: Platform.OS === 'ios' ? 'System' : undefined,
     fontWeight: '800',
     letterSpacing: -0.5,
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
+    borderWidth: 0.1,
     borderColor: 'rgba(255,255,255,0.2)',
   },
   uploadCard: {

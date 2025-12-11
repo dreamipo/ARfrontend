@@ -202,7 +202,8 @@ const saveImageLocally = async (imageUri) => {
   const avatar = profileImage || `https://api.dicebear.com/9.x/thumbs/png?seed=${dbUser.name}`;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -218,17 +219,21 @@ const saveImageLocally = async (imageUri) => {
         >
           {/* Header */}
           <View style={styles.header}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.7}>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+              <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.7} style={{width:'33%'}}>
                 <MaterialCommunityIcons
-                  name="arrow-left"
-                  size={28}
+                  name="chevron-left"
+                  size={35}
                   color="white"
                 />
               </TouchableOpacity>
-              <View>
-                <Text style={styles.greeting}>Your Profile</Text>
-                <Text style={styles.title}>Account Settings</Text>
+              <View style={{width:'33%'}}>
+                 <Text style={styles.title}>Profile</Text>
+    
+               
+              </View>
+              <View style={{width:'33%'}}>
+                
               </View>
             </View>
           </View>
@@ -463,11 +468,16 @@ const saveImageLocally = async (imageUri) => {
           <Text style={styles.versionText}>Version 1.0.0</Text>
         </Animated.View>
       </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe : {
+    flex: 1,
+     backgroundColor: "#0a0614",
+  },
   container: {
     flex: 1,
     backgroundColor: "#0a0614",
@@ -490,10 +500,12 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 10,
+    
   },
   header: {
-    marginBottom: 24,
+    marginBottom: 10,
+
+  
   },
   greeting: {
     fontSize: 16,
@@ -504,10 +516,12 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "white",
-    fontSize: 28,
-    fontWeight: "800",
-    letterSpacing: -0.5,
+    fontSize: 24,
+    fontWeight: "600",
+    letterSpacing: -0.2,
     fontFamily: Platform.select({ ios: 'SF Pro Display', android: 'Inter' }),
+
+    textAlign: "center",
   },
   profileCard: {
     borderRadius: 24,
