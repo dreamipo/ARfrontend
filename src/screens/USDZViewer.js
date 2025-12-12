@@ -45,53 +45,41 @@ export default function USDZViewer({ route, navigation }) {
     );
   }
 
-  const checkFileAvailability = async (url, maxAttempts = 5) => {
-    for (let i = 0; i < maxAttempts; i++) {
-      try {
-        const response = await fetch(url, { method: 'HEAD' });
-        if (response.ok) {
-          return true;
-        }
-      } catch (error) {
-        console.log(`Attempt ${i + 1} failed, retrying...`);
-      }
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    }
-    return false;
-  };
-
   const openAR = async () => {
     setIsOpeningAR(true);
     setDownloadProgress(0);
 
     try {
+      // Simulate progress during preload
       const progressInterval = setInterval(() => {
         setDownloadProgress(prev => {
           if (prev >= 90) {
             clearInterval(progressInterval);
             return 90;
           }
-          return prev + 10;
+          return prev + 9; // Increment by 9% per second (90% in 10 seconds)
         });
       }, 1000);
 
-      const isAvailable = await checkFileAvailability(usdzUrl);
+      // Preload USDZ file in background
+      console.log("Preloading USDZ file...");
+      const preloadPromise = fetch(usdzUrl).then(response => response.blob());
+      
+      // Wait for 10 seconds OR until file is loaded (whichever comes first)
+      await Promise.race([
+        preloadPromise,
+        new Promise(resolve => setTimeout(resolve, 10000))
+      ]);
       
       clearInterval(progressInterval);
       setDownloadProgress(100);
+      
+      console.log("USDZ preload complete, opening AR viewer...");
 
-      if (!isAvailable) {
-        Alert.alert(
-          "Download Error", 
-          "The AR file is not ready yet. Please try again in a moment.",
-          [{ text: "OK" }]
-        );
-        setIsOpeningAR(false);
-        return;
-      }
-
+      // Small delay to show 100% completion
       await new Promise(resolve => setTimeout(resolve, 500));
 
+      // Now open AR viewer
       const canOpen = await Linking.canOpenURL(usdzUrl);
       if (canOpen) {
         await Linking.openURL(usdzUrl);

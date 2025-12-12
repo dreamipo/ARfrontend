@@ -64,6 +64,19 @@ const ModelViewer = ({ route, navigation }) => {
     setIsOpeningAR(true);
 
     try {
+      // Preload USDZ file in background
+      console.log("Preloading USDZ file...");
+      const preloadPromise = fetch(usdzUrl).then(response => response.blob());
+      
+      // Wait for 10 seconds OR until file is loaded (whichever comes first)
+      await Promise.race([
+        preloadPromise,
+        new Promise(resolve => setTimeout(resolve, 10000))
+      ]);
+      
+      console.log("USDZ preload complete, opening AR viewer...");
+
+      // Now open AR viewer
       if (Platform.OS === "ios") {
         await Linking.openURL(usdzUrl);
       } else {

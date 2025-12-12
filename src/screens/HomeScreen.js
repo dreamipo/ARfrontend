@@ -165,7 +165,7 @@ export default function HomeScreen({ navigation }) {
     });
 
     try {
-      const backendUrl = "https://ar-backend-9wul.onrender.com/generate-3d-model";
+      const backendUrl = "https://3e4eea3d82ad.ngrok-free.app/generate-3d-model";
 
       // Professional progress simulation - 120 seconds to reach 90%
       let currentProgress = 0;
